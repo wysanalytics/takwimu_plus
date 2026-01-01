@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Takwimu+{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h2 class="mb-1">Dashboard</h2>
+            <p class="text-muted mb-0">Welcome back, {{ current_user.first_name or current_user.business_name or 'there' }}!</p>
+        </div>
+        <div>
+            {% if subscription_status == 'trial' %}
+            <span class="badge bg-warning text-dark fs-6">
+                <i class="bi bi-hourglass-split"></i> Trial: {{ days_remaining }} days left
+            </span>
+            {% elif subscription_status == 'active' %}
+            <span class="badge bg-success fs-6">
+                <i class="bi bi-check-circle"></i> Active Subscription
+            </span>
+            {% else %}
+            <a href="{{ url_for('main.billing') }}" class="badge bg-danger text-decoration-none fs-6">
+                <i class="bi bi-exclamation-circle"></i> Subscription Expired - Renew Now
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="card-title mb-1">Today's Sales</h6>
+                            <h3 class="mb-0">TZS {{ "{:,.0f}".format(today_sales) }}</h3>
+                        </div>
+                        <i class="bi bi-cash fs-3 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="card-title mb-1">Today's Profit</h6>
+                            <h3 class="mb-0">TZS {{ "{:,.0f}".format(today_profit) }}</h3>
+                        </div>
+                        <i class="bi bi-graph-up-arrow fs-3 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="card-title mb-1">Monthly Sales</h6>
+                            <h3 class="mb-0">TZS {{ "{:,.0f}".format(monthly_sales) }}</h3>
+                        </div>
+                        <i class="bi bi-calendar-check fs-3 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card bg-warning text-dark h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="card-title mb-1">Monthly Expenses</h6>
+                            <h3 class="mb-0">TZS {{ "{:,.0f}".format(monthly_expenses) }}</h3>
+                        </div>
+                        <i class="bi bi-wallet2 fs-3 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-graph-up text-success fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Monthly Profit</h6>
+                            <h4 class="text-success mb-0">TZS {{ "{:,.0f}".format(monthly_profit) }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-danger bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-calculator text-danger fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Estimated VAT (18%)</h6>
+                            <h4 class="text-danger mb-0">TZS {{ "{:,.0f}".format(estimated_vat) }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-box-seam text-primary fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Total Products</h6>
+                            <h4 class="text-primary mb-0">{{ products_count }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Alert -->
+    {% if low_stock %}
+    <div class="alert alert-warning d-flex align-items-start mb-4">
+        <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+        <div>
+            <h6 class="alert-heading mb-2">Low Stock Alert</h6>
+            <p class="mb-2">The following products have 5 or fewer items in stock:</p>
+            <ul class="mb-0">
+                {% for product in low_stock %}
+                <li><strong>{{ product.name }}</strong> - Only {{ product.stock }} left</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-lightning"></i> Quick Actions</h5>
+        </div>
+        <div class="card-body">
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ url_for('main.pos') }}" class="btn btn-success btn-lg">
+                    <i class="bi bi-cart-plus"></i> New Sale
+                </a>
+                <a href="{{ url_for('main.products') }}" class="btn btn-outline-primary btn-lg">
+                    <i class="bi bi-plus-circle"></i> Add Product
+                </a>
+                <a href="{{ url_for('main.expenses') }}" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-receipt"></i> Add Expense
+                </a>
+                <a href="{{ url_for('main.reports') }}" class="btn btn-outline-info btn-lg">
+                    <i class="bi bi-bar-chart"></i> View Reports
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

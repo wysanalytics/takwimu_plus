@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% block title %}Reports - Takwimu+{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <h2 class="mb-4"><i class="bi bi-graph-up"></i> Sales Reports</h2>
+
+    <!-- Period Toggle -->
+    <div class="btn-group mb-4" role="group">
+        <button type="button" class="btn btn-primary active" id="weeklyBtn" onclick="showWeekly()">
+            <i class="bi bi-calendar-week"></i> Weekly
+        </button>
+        <button type="button" class="btn btn-outline-primary" id="monthlyBtn" onclick="showMonthly()">
+            <i class="bi bi-calendar-month"></i> Monthly
+        </button>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row">
+        <!-- Sales Trend Chart -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart-fill text-primary"></i> Sales & Profit Trend</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Card -->
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-calculator"></i> Period Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <span class="text-muted">Total Sales</span>
+                        <h3 class="text-primary mb-0" id="totalSales">TZS 0</h3>
+                    </div>
+                    <div class="mb-4">
+                        <span class="text-muted">Total Profit</span>
+                        <h3 class="text-success mb-0" id="totalProfit">TZS 0</h3>
+                    </div>
+                    <div>
+                        <span class="text-muted">Transactions</span>
+                        <h3 class="mb-0" id="totalTransactions">0</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Second Row -->
+    <div class="row">
+        <!-- Expense Categories -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart-fill text-danger"></i> Expenses by Category</h5>
+                </div>
+                <div class="card-body">
+                    {% if expense_data %}
+                    <canvas id="expenseChart" height="250"></canvas>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1"></i>
+                        <p class="mt-2">No expense data yet</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Products -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-trophy-fill text-warning"></i> Top Selling Products</h5>
+                </div>
+                <div class="card-body">
+                    {% if top_products %}
+                    <canvas id="productsChart" height="250"></canvas>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1"></i>
+                        <p class="mt-2">No sales data yet</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-table"></i> Daily Breakdown</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="dataTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Sales</th>
+                            <th>Profit</th>
+                            <th>Transactions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Data from Flask
+const weeklyData = {{ weekly_data | tojson | safe }};
+const monthlyData = {{ monthly_data | tojson | safe }};
+const expenseData = {{ expense_data | tojson | safe }};
+const topProducts = {{ top_products | tojson | safe }};
+
+let salesChart, expenseChart, productsChart;
+
+// Initialize charts on load
+document.addEventListener('DOMContentLoaded', function() {
+    initSalesChart(weeklyData);
+    if (expenseData.length > 0) initExpenseChart();
+    if (topProducts.length > 0) initProductsChart();
+    updateSummary(weeklyData);
+    updateTable(weeklyData);
+});
+
+function initSalesChart(data) {
+    const ctx = document.getElementById('salesChart').getContext('2d');
+
+    if (salesChart) salesChart.destroy();
+
+    salesChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.map(d => d.date),
+            datasets: [
+                {
+                    label: 'Sales (TZS)',
+                    data: data.map(d => d.sales),
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Profit (TZS)',
+                    data: data.map(d => d.profit),
+                    backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                    borderColor: 'rgb(34, 197, 94)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'TZS ' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function initExpenseChart() {
+    const ctx = document.getElementById('expenseChart').getContext('2d');
+
+    expenseChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: expenseData.map(d => d.category),
+            datasets: [{
+                data: expenseData.map(d => d.amount),
+                backgroundColor: [
+                    'rgba(239, 68, 68, 0.7)',
+                    'rgba(59, 130, 246, 0.7)',
+                    'rgba(34, 197, 94, 0.7)',
+                    'rgba(168, 85, 247, 0.7)',
+                    'rgba(251, 191, 36, 0.7)',
+                    'rgba(107, 114, 128, 0.7)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right' }
+            }
+        }
+    });
+}
+
+function initProductsChart() {
+    const ctx = document.getElementById('productsChart').getContext('2d');
+
+    productsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: topProducts.map(p => p.name),
+            datasets: [{
+                label: 'Units Sold',
+                data: topProducts.map(p => p.quantity),
+                backgroundColor: 'rgba(168, 85, 247, 0.7)',
+                borderColor: 'rgb(168, 85, 247)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+}
+
+function showWeekly() {
+    document.getElementById('weeklyBtn').className = 'btn btn-primary active';
+    document.getElementById('monthlyBtn').className = 'btn btn-outline-primary';
+    initSalesChart(weeklyData);
+    updateSummary(weeklyData);
+    updateTable(weeklyData);
+}
+
+function showMonthly() {
+    document.getElementById('monthlyBtn').className = 'btn btn-primary active';
+    document.getElementById('weeklyBtn').className = 'btn btn-outline-primary';
+    initSalesChart(monthlyData);
+    updateSummary(monthlyData);
+    updateTable(monthlyData);
+}
+
+function updateSummary(data) {
+    const totalSales = data.reduce((sum, d) => sum + d.sales, 0);
+    const totalProfit = data.reduce((sum, d) => sum + d.profit, 0);
+    const transactions = data.reduce((sum, d) => sum + d.count, 0);
+
+    document.getElementById('totalSales').textContent = 'TZS ' + totalSales.toLocaleString();
+    document.getElementById('totalProfit').textContent = 'TZS ' + totalProfit.toLocaleString();
+    document.getElementById('totalTransactions').textContent = transactions.toLocaleString();
+}
+
+function updateTable(data) {
+    const tbody = document.getElementById('tableBody');
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No sales data for this period</td></tr>';
+        return;
+    }
+    tbody.innerHTML = data.map(d => `
+        <tr>
+            <td>${d.date}</td>
+            <td>TZS ${d.sales.toLocaleString()}</td>
+            <td class="text-success">TZS ${d.profit.toLocaleString()}</td>
+            <td>${d.count}</td>
+        </tr>
+    `).join('');
+}
+</script>
+{% endblock %}

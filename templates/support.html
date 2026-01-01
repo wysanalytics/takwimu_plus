@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Support - Takwimu+{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <i class="bi bi-headset"></i> Contact Support
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select name="category" class="form-select">
+                                <option value="general">General Question</option>
+                                <option value="complaint">Complaint</option>
+                                <option value="payment">Payment Issue</option>
+                                <option value="technical">Technical Problem</option>
+                                <option value="feature">Feature Request</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Subject</label>
+                            <input type="text" name="subject" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Message</label>
+                            <textarea name="content" class="form-control" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-send"></i> Send Message
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-body text-center">
+                    <p class="mb-2">Or contact us directly:</p>
+                    <p><i class="bi bi-phone"></i> +255 785 614 335</p>
+                    <p><i class="bi bi-envelope"></i> wysanalytics@gmail.com</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-clock-history"></i> Your Messages
+                </div>
+                {% if sent_messages %}
+                <div class="list-group list-group-flush">
+                    {% for m in sent_messages %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ m.subject }}</strong>
+                            <small class="text-muted">{{ m.created_at.strftime('%d/%m/%Y') }}</small>
+                        </div>
+                        <p class="mb-0 small text-muted">{{ m.content[:100] }}...</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="card-body text-muted text-center">
+                    No messages sent yet
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Takwimu+ | Smart POS & Accounting for SMEs</title>
+    <meta name="description" content="Smart POS, accounting, and tax assistant for Tanzanian SMEs">
+    <meta name="theme-color" content="#16a34a">
+    <link rel="manifest" href="/manifest.json">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .hero { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); min-height: 100vh; }
+        .feature-icon { width: 60px; height: 60px; background: rgba(22, 163, 74, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+        .feature-icon i { font-size: 24px; color: #16a34a; }
+    </style>
+</head>
+<body>
+    <div class="hero text-white">
+        <div class="container py-5">
+            <nav class="d-flex justify-content-between align-items-center mb-5">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-graph-up-arrow fs-3"></i>
+                    <span class="fs-4 fw-bold">Takwimu+</span>
+                </div>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-light btn-lg">Login / Sign Up</a>
+            </nav>
+
+            <div class="row align-items-center py-5">
+                <div class="col-lg-6 mb-4">
+                    <h1 class="display-4 fw-bold mb-4">Smart POS & Accounting for Tanzanian SMEs</h1>
+                    <p class="lead mb-4">Track sales, manage expenses, calculate profits, and estimate taxes - all in one simple app.</p>
+                    <div class="d-flex gap-3">
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg">Start Free Trial (30 Days)</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container py-5">
+        <h2 class="text-center mb-5">Everything You Need</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="feature-icon mx-auto mb-3"><i class="bi bi-cart"></i></div>
+                    <h5>Point of Sale</h5>
+                    <p class="text-muted">Quick and easy sales with multiple payment methods</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="feature-icon mx-auto mb-3"><i class="bi bi-graph-up"></i></div>
+                    <h5>Profit Tracking</h5>
+                    <p class="text-muted">See your profits in real-time</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="feature-icon mx-auto mb-3"><i class="bi bi-calculator"></i></div>
+                    <h5>Tax Estimates</h5>
+                    <p class="text-muted">Know your VAT and tax obligations</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="feature-icon mx-auto mb-3"><i class="bi bi-bar-chart"></i></div>
+                    <h5>Reports</h5>
+                    <p class="text-muted">Visual charts for business insights</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="feature-icon mx-auto mb-3"><i class="bi bi-phone"></i></div>
+                    <h5>Mobile Money</h5>
+                    <p class="text-muted">Accept M-Pesa, Airtel Money, and more</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="feature-icon mx-auto mb-3"><i class="bi bi-bell"></i></div>
+                    <h5>Low Stock Alerts</h5>
+                    <p class="text-muted">Never run out of popular products</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-light py-5">
+        <div class="container text-center">
+            <h2 class="mb-4">Simple Pricing</h2>
+            <p class="lead text-muted mb-4">Try free for 30 days. Then only TZS 15,000/month</p>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-lg">Get Started Now</a>
+        </div>
+    </div>
+
+    <footer class="py-4 text-center text-muted">
+        <p>Takwimu+ - Smart POS & Accounting for Tanzanian SMEs</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

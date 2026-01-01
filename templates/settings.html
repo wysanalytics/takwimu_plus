@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Takwimu+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h2 class="mb-4"><i class="bi bi-gear"></i> Settings</h2>
+            
+            <form id="settings-form">
+                <!-- Tax Settings -->
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <i class="bi bi-calculator"></i> Tax Settings
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="vatRate" class="form-label">VAT Rate (%)</label>
+                            <input type="number" class="form-control" id="vatRate" 
+                                   min="0" max="100" step="0.1" value="18">
+                            <div class="form-text">TRA standard VAT rate is 18%</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="presumptiveTaxRate" class="form-label">Presumptive Tax Rate (%)</label>
+                            <input type="number" class="form-control" id="presumptiveTaxRate" 
+                                   min="0" max="100" step="0.1" value="3">
+                            <div class="form-text">TRA presumptive tax for SMEs is typically 3%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stock Alerts -->
+                <div class="card mb-4">
+                    <div class="card-header bg-warning">
+                        <i class="bi bi-exclamation-triangle"></i> Stock Alerts
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="lowStockAlertEnabled" checked>
+                            <label class="form-check-label" for="lowStockAlertEnabled">
+                                Enable Low Stock Alerts
+                            </label>
+                            <div class="form-text">Get notified when products are running low</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="lowStockThreshold" class="form-label">Low Stock Threshold</label>
+                            <input type="number" class="form-control" id="lowStockThreshold" 
+                                   min="1" value="10">
+                            <div class="form-text">Alert when stock falls below this number</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- SMS Reminders -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <i class="bi bi-chat-dots"></i> SMS Reminders
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="smsRemindersEnabled" disabled>
+                            <label class="form-check-label" for="smsRemindersEnabled">
+                                Enable SMS Payment Reminders
+                            </label>
+                            <div class="form-text text-muted">Coming soon - SMS reminders for subscription payments</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="smsPhoneNumber" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="smsPhoneNumber" 
+                                   placeholder="+255..." disabled>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-success btn-lg w-100">
+                    <i class="bi bi-check-lg"></i> Save Settings
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    // Load current settings
+    try {
+        const response = await fetch('/api/settings');
+        const settings = await response.json();
+        
+        document.getElementById('vatRate').value = settings.vatRate || 18;
+        document.getElementById('presumptiveTaxRate').value = settings.presumptiveTaxRate || 3;
+        document.getElementById('lowStockAlertEnabled').checked = settings.lowStockAlertEnabled !== false;
+        document.getElementById('lowStockThreshold').value = settings.lowStockThreshold || 10;
+        document.getElementById('smsRemindersEnabled').checked = settings.smsRemindersEnabled || false;
+        document.getElementById('smsPhoneNumber').value = settings.smsPhoneNumber || '';
+    } catch (error) {
+        console.error('Failed to load settings:', error);
+    }
+    
+    // Save settings
+    document.getElementById('settings-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const data = {
+            vatRate: parseFloat(document.getElementById('vatRate').value),
+            presumptiveTaxRate: parseFloat(document.getElementById('presumptiveTaxRate').value),
+            lowStockAlertEnabled: document.getElementById('lowStockAlertEnabled').checked,
+            lowStockThreshold: parseInt(document.getElementById('lowStockThreshold').value),
+            smsRemindersEnabled: document.getElementById('smsRemindersEnabled').checked,
+            smsPhoneNumber: document.getElementById('smsPhoneNumber').value || null
+        };
+        
+        try {
+            const response = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            if (response.ok) {
+                alert('Settings saved successfully!');
+            } else {
+                alert('Failed to save settings');
+            }
+        } catch (error) {
+            alert('Error saving settings: ' + error.message);
+        }
+    });
+});
+</script>
+{% endblock %}

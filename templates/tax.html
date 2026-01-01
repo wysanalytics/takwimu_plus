@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Tax Estimates - Takwimu+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-calculator"></i> Tax Estimates</h2>
+                <a href="{{ url_for('main.settings') }}" class="btn btn-outline-success btn-sm">
+                    <i class="bi bi-gear"></i> Edit Tax Rates
+                </a>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="loading-state" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">Loading tax data...</p>
+            </div>
+
+            <!-- Main Content (hidden until loaded) -->
+            <div id="main-content" style="display: none;">
+                <!-- Current Rates Display -->
+                <div class="alert alert-info mb-4">
+                    <div class="d-flex justify-content-between flex-wrap gap-2">
+                        <span><i class="bi bi-percent"></i> <strong>Your VAT Rate:</strong> <span id="display-vat">18</span>%</span>
+                        <span><i class="bi bi-building"></i> <strong>Presumptive Tax Rate:</strong> <span id="display-presumptive">3</span>%</span>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <!-- VAT Estimate -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <i class="bi bi-percent"></i> VAT (Value Added Tax)
+                            </div>
+                            <div class="card-body">
+                                <h2 class="text-primary mb-3">TZS <span id="vat-amount">0</span></h2>
+                                <p class="text-muted mb-3">Based on monthly sales</p>
+                                <hr>
+                                <div class="small">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Monthly Sales:</span>
+                                        <span class="fw-bold">TZS <span id="vat-sales">0</span></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="text-muted">VAT Rate:</span>
+                                        <span class="fw-bold"><span id="vat-rate">18</span>%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-light">
+                                <small class="text-muted">
+                                    <i class="bi bi-info-circle"></i> VAT is charged on goods and services
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Presumptive Tax -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border-success">
+                            <div class="card-header bg-success text-white">
+                                <i class="bi bi-building"></i> Presumptive Tax (SME)
+                            </div>
+                            <div class="card-body">
+                                <h2 class="text-success mb-3">TZS <span id="presumptive-amount">0</span></h2>
+                                <p class="text-muted mb-3">Based on quarterly turnover</p>
+                                <hr>
+                                <div class="small">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Quarterly Sales (Est.):</span>
+                                        <span class="fw-bold">TZS <span id="presumptive-sales">0</span></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="text-muted">Tax Rate:</span>
+                                        <span class="fw-bold"><span id="presumptive-rate">3</span>%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-light">
+                                <small class="text-muted">
+                                    <i class="bi bi-info-circle"></i> For businesses with turnover below TZS 100M/year
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Table -->
+                <div class="card mt-4">
+                    <div class="card-header bg-dark text-white">
+                        <i class="bi bi-clipboard-data"></i> Tax Summary
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Tax Type</th>
+                                        <th>Period</th>
+                                        <th>Taxable Amount</th>
+                                        <th>Rate</th>
+                                        <th>Estimated Tax</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><i class="bi bi-percent text-primary"></i> VAT</td>
+                                        <td>Monthly</td>
+                                        <td>TZS <span id="summary-vat-sales">0</span></td>
+                                        <td><span id="summary-vat-rate">18</span>%</td>
+                                        <td class="fw-bold text-primary">TZS <span id="summary-vat-tax">0</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="bi bi-building text-success"></i> Presumptive</td>
+                                        <td>Quarterly</td>
+                                        <td>TZS <span id="summary-presumptive-sales">0</span></td>
+                                        <td><span id="summary-presumptive-rate">3</span>%</td>
+                                        <td class="fw-bold text-success">TZS <span id="summary-presumptive-tax">0</span></td>
+                                    </tr>
+                                    <tr class="table-secondary">
+                                        <td colspan="4" class="fw-bold">Annual Estimate (Projected)</td>
+                                        <td class="fw-bold text-danger">TZS <span id="annual-estimate">0</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Disclaimer -->
+                <div class="alert alert-warning mt-4">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Disclaimer:</strong> These are estimates only. Please consult TRA or a tax professional for accurate tax obligations.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function formatNumber(num) {
+    return Math.round(num).toLocaleString();
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        // Load user's custom tax rates
+        const settingsRes = await fetch('/api/settings');
+        const settings = await settingsRes.json();
+
+        const vatRate = settings.vatRate || 18;
+        const presumptiveRate = settings.presumptiveTaxRate || 3;
+
+        // Display rates
+        document.getElementById('display-vat').textContent = vatRate;
+        document.getElementById('display-presumptive').textContent = presumptiveRate;
+        document.getElementById('vat-rate').textContent = vatRate;
+        document.getElementById('presumptive-rate').textContent = presumptiveRate;
+        document.getElementById('summary-vat-rate').textContent = vatRate;
+        document.getElementById('summary-presumptive-rate').textContent = presumptiveRate;
+
+        // Load sales data
+        const dashboardRes = await fetch('/api/dashboard/summary');
+        const dashboard = await dashboardRes.json();
+
+        const monthSales = dashboard.monthSales || 0;
+        const quarterlySales = monthSales * 3;
+
+        // Calculate taxes with custom rates
+        const vatAmount = monthSales * (vatRate / 100);
+        const presumptiveAmount = quarterlySales * (presumptiveRate / 100);
+        const annualEstimate = (vatAmount * 12) + (presumptiveAmount * 4);
+
+        // Update VAT card
+        document.getElementById('vat-sales').textContent = formatNumber(monthSales);
+        document.getElementById('vat-amount').textContent = formatNumber(vatAmount);
+
+        // Update Presumptive card
+        document.getElementById('presumptive-sales').textContent = formatNumber(quarterlySales);
+        document.getElementById('presumptive-amount').textContent = formatNumber(presumptiveAmount);
+
+        // Update Summary table
+        document.getElementById('summary-vat-sales').textContent = formatNumber(monthSales);
+        document.getElementById('summary-vat-tax').textContent = formatNumber(vatAmount);
+        document.getElementById('summary-presumptive-sales').textContent = formatNumber(quarterlySales);
+        document.getElementById('summary-presumptive-tax').textContent = formatNumber(presumptiveAmount);
+        document.getElementById('annual-estimate').textContent = formatNumber(annualEstimate);
+
+        // Hide loading, show content
+        document.getElementById('loading-state').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+
+    } catch (error) {
+        console.error('Failed to load tax data:', error);
+        document.getElementById('loading-state').innerHTML =
+            '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Failed to load tax data. Please refresh the page.</div>';
+    }
+});
+</script>
+{% endblock %}

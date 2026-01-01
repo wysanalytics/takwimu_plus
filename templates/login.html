@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Login - Takwimu+{% endblock %}
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center py-4">
+    <div class="card shadow" style="max-width: 400px; width: 100%;">
+        <div class="card-header text-center bg-success text-white py-4">
+            <h4><i class="bi bi-graph-up-arrow"></i> Takwimu+</h4>
+            <p class="mb-0 small">Smart POS & Accounting</p>
+        </div>
+        <div class="card-body p-4">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('auth.login') }}">
+                <div class="mb-3">
+                    <label class="form-label">Secret Key <span class="text-muted">(Admin only)</span></label>
+                    <input type="password"
+                           name="secret_key"
+                           class="form-control"
+                           placeholder="Leave empty for regular login">
+                </div>
+                <hr class="my-3">
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="text"
+                           name="email"
+                           class="form-control"
+                           placeholder="Enter your email"
+                           required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input type="password"
+                           name="password"
+                           class="form-control"
+                           placeholder="Enter your password"
+                           required>
+                </div>
+                <button type="submit" class="btn btn-success w-100 mb-3">
+                    <i class="bi bi-box-arrow-in-right"></i> Login
+                </button>
+            </form>
+            <div class="text-center">
+                <a href="{{ url_for('auth.register') }}" class="text-decoration-none">
+                    New user? Create an account
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

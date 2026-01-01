@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Billing - Takwimu+{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4">Billing & Subscription</h2>
+    
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Subscription Status</div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            {% if subscription_status == 'trial' %}
+                            <span class="badge bg-warning text-dark fs-6">Trial</span>
+                            {% elif subscription_status == 'active' %}
+                            <span class="badge bg-success fs-6">Active</span>
+                            {% else %}
+                            <span class="badge bg-danger fs-6">Expired</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {% if days_remaining > 0 %}
+                            <strong>{{ days_remaining }} days remaining</strong>
+                            {% else %}
+                            <strong class="text-danger">Subscription expired</strong>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if subscription_end %}
+                    <p class="text-muted mb-0">Expires: {{ subscription_end.strftime('%d %B %Y') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Monthly Subscription</div>
+                <div class="card-body text-center">
+                    <h2 class="text-success mb-3">TZS {{ "{:,.0f}".format(monthly_price) }}/month</h2>
+                    <p class="text-muted">Pay via Airtel Money to continue using Takwimu+</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-header">How to Pay</div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Step 1: Send Payment</h5>
+                    <ol>
+                        <li>Open Airtel Money on your phone</li>
+                        <li>Select "Send Money"</li>
+                        <li>Enter number: <strong>{{ airtel_number }}</strong></li>
+                        <li>Amount: <strong>TZS {{ "{:,.0f}".format(monthly_price) }}</strong></li>
+                        <li>Confirm and note your Transaction Reference</li>
+                    </ol>
+                </div>
+                <div class="col-md-6">
+                    <h5>Step 2: Submit Reference</h5>
+                    <form id="paymentForm">
+                        <div class="mb-3">
+                            <label class="form-label">Transaction Reference</label>
+                            <input type="text" name="transaction_ref" class="form-control" 
+                                   placeholder="e.g., MP123456789" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone Number Used</label>
+                            <input type="tel" name="payer_phone" class="form-control" 
+                                   placeholder="+255...">
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">
+                            Submit for Verification
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if payments %}
+    <div class="card mt-4">
+        <div class="card-header">Payment History</div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Reference</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td>{{ payment.created_at.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ payment.transaction_ref }}</td>
+                            <td>TZS {{ "{:,.0f}".format(payment.amount) }}</td>
+                            <td>
+                                {% if payment.status == 'pending' %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                                {% elif payment.status == 'verified' %}
+                                <span class="badge bg-success">Verified</span>
+                                {% else %}
+                                <span class="badge bg-danger">Rejected</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('paymentForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    try {
+        const response = await fetch('/api/payments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Payment submitted! We will verify and activate your subscription within 24 hours.');
+            location.reload();
+        } else {
+            alert('Error submitting payment');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+});
+</script>
+{% endblock %}

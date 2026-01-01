@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Takwimu+</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand"><i class="bi bi-shield-lock"></i> Takwimu+ Admin</span>
+            <div>
+                <span class="badge bg-danger me-2" id="msg-badge" style="display:none;">0 new</span>
+                <a href="{{ url_for('admin.logout') }}" class="btn btn-outline-light btn-sm">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <!-- Stats Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md">
+                <div class="card bg-primary text-white"><div class="card-body py-3">
+                    <h6><i class="bi bi-people"></i> Total SMEs</h6><h3>{{ total_users }}</h3>
+                </div></div>
+            </div>
+            <div class="col-6 col-md">
+                <div class="card bg-success text-white"><div class="card-body py-3">
+                    <h6><i class="bi bi-check-circle"></i> Active</h6><h3>{{ active_subscriptions }}</h3>
+                </div></div>
+            </div>
+            <div class="col-6 col-md">
+                <div class="card bg-warning"><div class="card-body py-3">
+                    <h6><i class="bi bi-hourglass"></i> Trial</h6><h3>{{ trial_users }}</h3>
+                </div></div>
+            </div>
+            <div class="col-6 col-md">
+                <div class="card bg-secondary text-white"><div class="card-body py-3">
+                    <h6><i class="bi bi-x-circle"></i> Expired</h6><h3>{{ expired_users }}</h3>
+                </div></div>
+            </div>
+            <div class="col-6 col-md">
+                <div class="card bg-danger text-white"><div class="card-body py-3">
+                    <h6><i class="bi bi-clock"></i> Pending</h6><h3>{{ pending_payments }}</h3>
+                </div></div>
+            </div>
+        </div>
+
+        <!-- Revenue Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card"><div class="card-body">
+                    <h6 class="text-muted">Today's Sales</h6>
+                    <h4 class="text-primary">TZS {{ "{:,.0f}".format(today_sales) }}</h4>
+                </div></div>
+            </div>
+            <div class="col-md-4">
+                <div class="card"><div class="card-body">
+                    <h6 class="text-muted">Today's Profit</h6>
+                    <h4 class="text-success">TZS {{ "{:,.0f}".format(today_profit) }}</h4>
+                </div></div>
+            </div>
+            <div class="col-md-4">
+                <div class="card"><div class="card-body">
+                    <h6 class="text-muted">Subscription Revenue</h6>
+                    <h4 class="text-info">TZS {{ "{:,.0f}".format(total_revenue) }}</h4>
+                </div></div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-8">
+                <div class="card"><div class="card-header">Weekly Sales Trend</div>
+                <div class="card-body"><canvas id="salesChart" height="150"></canvas></div></div>
+            </div>
+            <div class="col-md-4">
+                <div class="card"><div class="card-header">User Distribution</div>
+                <div class="card-body"><canvas id="userChart" height="150"></canvas></div></div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-3">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#users"><i class="bi bi-people"></i> Users</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#payments"><i class="bi bi-credit-card"></i> Payments</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#messages"><i class="bi bi-envelope"></i> Messages <span class="badge bg-danger" id="msg-count">{{ unread_messages }}</span></a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#settings"><i class="bi bi-gear"></i> Settings</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#activity"><i class="bi bi-clock-history"></i> Activity</a></li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Users Tab -->
+            <div class="tab-pane fade show active" id="users">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>All SMEs</span>
+                        <div>
+                            <input type="text" class="form-control form-control-sm d-inline-block" style="width:200px" placeholder="Search..." id="userSearch" onkeyup="filterUsers()">
+                            <a href="/admin/api/export/users" class="btn btn-sm btn-outline-success"><i class="bi bi-download"></i> Export CSV</a>
+                        </div>
+                    </div>
+                    <div class="card-body p-0" id="users-table"></div>
+                </div>
+            </div>
+
+            <!-- Payments Tab -->
+            <div class="tab-pane fade" id="payments">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-primary" onclick="loadPayments('all')">All</button>
+                            <button class="btn btn-outline-warning" onclick="loadPayments('pending')">Pending</button>
+                            <button class="btn btn-outline-success" onclick="loadPayments('verified')">Verified</button>
+                            <button class="btn btn-outline-danger" onclick="loadPayments('rejected')">Rejected</button>
+                        </div>
+                        <a href="/admin/api/export/payments" class="btn btn-sm btn-outline-success"><i class="bi bi-download"></i> Export CSV</a>
+                    </div>
+                    <div class="card-body p-0" id="payments-table"></div>
+                </div>
+            </div>
+
+            <!-- Messages Tab -->
+            <div class="tab-pane fade" id="messages">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">Send Announcement</div>
+                            <div class="card-body">
+                                <input type="text" class="form-control mb-2" id="ann-subject" placeholder="Subject">
+                                <textarea class="form-control mb-2" id="ann-content" rows="3" placeholder="Message to all users..."></textarea>
+                                <button class="btn btn-primary w-100" onclick="sendAnnouncement()"><i class="bi bi-megaphone"></i> Send to All</button>
+                            </div>
+                        </div>
+                        <div class="card mt-3">
+                            <div class="card-header">Announcement History</div>
+                            <div class="card-body p-0" id="announcements-list" style="max-height:300px;overflow:auto;"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">User Messages</div>
+                            <div class="card-body p-0" id="messages-list" style="max-height:500px;overflow:auto;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-pane fade" id="settings">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">Subscription Settings</div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Monthly Price (TZS)</label>
+                                    <input type="text" class="form-control" value="15,000" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Trial Period (Days)</label>
+                                    <input type="text" class="form-control" value="30" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Payment Number</label>
+                                    <input type="text" class="form-control" value="+255785614335" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">Quick Stats</div>
+                            <div class="card-body">
+                                <p><strong>Conversion Rate:</strong> {{ ((active_subscriptions / total_users * 100) if total_users > 0 else 0)|round|int }}%</p>
+                                <p><strong>Potential Revenue:</strong> TZS {{ "{:,.0f}".format(trial_users * 15000) }}</p>
+                                <p><strong>Monthly Target:</strong> TZS {{ "{:,.0f}".format(total_users * 15000) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Tab -->
+            <div class="tab-pane fade" id="activity">
+                <div class="card">
+                    <div class="card-header">Activity Log</div>
+                    <div class="card-body p-0" id="activity-log"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reply Modal -->
+    <div class="modal fade" id="replyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Reply to User</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" id="reply-user-id">
+                    <p><strong>To:</strong> <span id="reply-to"></span></p>
+                    <p><strong>Original:</strong> <span id="reply-original" class="text-muted"></span></p>
+                    <textarea class="form-control" id="reply-content" rows="4" placeholder="Your reply..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="sendReply()">Send Reply</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    let allUsers = [], allPayments = [];
+
+    // Charts
+    new Chart(document.getElementById('salesChart'), {
+        type: 'line',
+        data: {
+            labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+            datasets: [{label:'Sales',data:[150000,220000,180000,350000,280000,420000,380000],borderColor:'#3b82f6',fill:true,backgroundColor:'rgba(59,130,246,0.1)'},
+                       {label:'Profit',data:[45000,66000,54000,105000,84000,126000,114000],borderColor:'#22c55e',fill:true,backgroundColor:'rgba(34,197,94,0.1)'}]
+        },
+        options:{responsive:true,maintainAspectRatio:false}
+    });
+
+    new Chart(document.getElementById('userChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Active','Trial','Expired'],
+            datasets: [{data:[{{active_subscriptions}},{{trial_users}},{{expired_users}}],backgroundColor:['#22c55e','#eab308','#ef4444']}]
+        }
+    });
+
+    // Users
+    async function loadUsers() {
+        const res = await fetch('/admin/api/users');
+        allUsers = await res.json();
+        renderUsers(allUsers);
+    }
+
+    function renderUsers(users) {
+        let html = '<table class="table table-hover table-sm mb-0"><thead class="table-light"><tr><th>Business</th><th>Email</th><th>Phone</th><th>Status</th><th>Days Left</th><th>Joined</th><th>Actions</th></tr></thead><tbody>';
+        users.forEach(u => {
+            const badge = u.subscription_status==='active'?'success':u.subscription_status==='trial'?'warning':'danger';
+            html += `<tr><td>${u.business_name||'N/A'}</td><td>${u.email}</td><td>${u.phone||'-'}</td><td><span class="badge bg-${badge}">${u.subscription_status}</span></td><td>${u.days_remaining}</td><td>${u.created_at?new Date(u.created_at).toLocaleDateString():'-'}</td>
+            <td>${u.subscription_status!=='active'?`<button class="btn btn-sm btn-success" onclick="activateUser(${u.id})">Activate</button>`:`<button class="btn btn-sm btn-outline-danger" onclick="suspendUser(${u.id})">Suspend</button>`}</td></tr>`;
+        });
+        document.getElementById('users-table').innerHTML = html + '</tbody></table>';
+    }
+
+    function filterUsers() {
+        const q = document.getElementById('userSearch').value.toLowerCase();
+        renderUsers(allUsers.filter(u => (u.business_name||'').toLowerCase().includes(q) || u.email.toLowerCase().includes(q)));
+    }
+
+    async function activateUser(id) { await fetch(`/admin/api/users/${id}/activate`,{method:'POST'}); loadUsers(); }
+    async function suspendUser(id) { if(confirm('Suspend this user?')) { await fetch(`/admin/api/users/${id}/suspend`,{method:'POST'}); loadUsers(); }}
+
+    // Payments
+    async function loadPayments(filter='all') {
+        const res = await fetch('/admin/api/payments');
+        allPayments = await res.json();
+        let payments = filter==='all' ? allPayments : allPayments.filter(p=>p.status===filter);
+        let html = '<table class="table table-hover table-sm mb-0"><thead class="table-light"><tr><th>Date</th><th>Business</th><th>Ref</th><th>Phone</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+        payments.forEach(p => {
+            const badge = p.status==='verified'?'success':p.status==='pending'?'warning':'danger';
+            const actions = p.status==='pending'?`<button class="btn btn-sm btn-success" onclick="verifyPayment(${p.id})"><i class="bi bi-check"></i></button> <button class="btn btn-sm btn-danger" onclick="rejectPayment(${p.id})"><i class="bi bi-x"></i></button>`:'-';
+            html += `<tr><td>${new Date(p.created_at).toLocaleDateString()}</td><td>${p.user_business||p.user_email}</td><td><code>${p.transaction_ref}</code></td><td>${p.payer_phone||'-'}</td><td>TZS ${Number(p.amount).toLocaleString()}</td><td><span class="badge bg-${badge}">${p.status}</span></td><td>${actions}</td></tr>`;
+        });
+        document.getElementById('payments-table').innerHTML = html + '</tbody></table>';
+    }
+
+    async function verifyPayment(id) { await fetch(`/admin/api/payments/${id}/verify`,{method:'POST'}); loadPayments(); alert('Verified!'); }
+    async function rejectPayment(id) { if(confirm('Reject?')) { await fetch(`/admin/api/payments/${id}/reject`,{method:'POST'}); loadPayments(); }}
+
+    // Messages
+    async function loadMessages() {
+        const res = await fetch('/admin/api/messages');
+        const msgs = await res.json();
+        document.getElementById('msg-count').textContent = msgs.filter(m=>!m.is_read).length;
+        let html = '<div class="list-group list-group-flush">';
+        if(msgs.length===0) html += '<div class="p-3 text-muted text-center">No messages</div>';
+        msgs.forEach(m => {
+            html += `<div class="list-group-item ${m.is_read?'':'bg-light'}">
+                <div class="d-flex justify-content-between"><strong>${m.user_business||m.user_email}</strong><small>${new Date(m.created_at).toLocaleString()}</small></div>
+                <p class="mb-1"><strong>${m.subject||'No Subject'}</strong></p>
+                <p class="mb-1 text-muted small">${m.content}</p>
+                <button class="btn btn-sm btn-outline-primary" onclick="openReply(${m.id},'${m.user_email}','${m.content.replace(/'/g,"\\'")}')"><i class="bi bi-reply"></i> Reply</button>
+                ${m.is_read?'':`<button class="btn btn-sm btn-outline-secondary" onclick="markRead(${m.id})">Mark Read</button>`}
+            </div>`;
+        });
+        document.getElementById('messages-list').innerHTML = html + '</div>';
+    }
+
+    async function loadAnnouncements() {
+        const res = await fetch('/admin/api/announcements');
+        const anns = await res.json();
+        let html = '<div class="list-group list-group-flush">';
+        if(anns.length===0) html += '<div class="p-3 text-muted text-center">No announcements</div>';
+        anns.forEach(a => {
+            html += `<div class="list-group-item"><strong>${a.subject}</strong><br><small class="text-muted">${new Date(a.created_at).toLocaleString()}</small></div>`;
+        });
+        document.getElementById('announcements-list').innerHTML = html + '</div>';
+    }
+
+    function openReply(id, email, content) {
+        document.getElementById('reply-user-id').value = id;
+        document.getElementById('reply-to').textContent = email;
+        document.getElementById('reply-original').textContent = content;
+        document.getElementById('reply-content').value = '';
+        new bootstrap.Modal(document.getElementById('replyModal')).show();
+    }
+
+    async function sendReply() {
+        await fetch('/admin/api/messages/reply',{method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({user_id:document.getElementById('reply-user-id').value,content:document.getElementById('reply-content').value})});
+        bootstrap.Modal.getInstance(document.getElementById('replyModal')).hide();
+        alert('Reply sent!');
+    }
+
+    async function markRead(id) { await fetch(`/admin/api/messages/${id}/read`,{method:'POST'}); loadMessages(); }
+
+    async function sendAnnouncement() {
+        const subject = document.getElementById('ann-subject').value;
+        const content = document.getElementById('ann-content').value;
+        if(!subject||!content) return alert('Fill subject and message');
+        await fetch('/admin/api/announcements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subject,content})});
+        document.getElementById('ann-subject').value = '';
+        document.getElementById('ann-content').value = '';
+        loadAnnouncements();
+        alert('Announcement sent!');
+    }
+
+    // Activity
+    async function loadActivity() {
+        const res = await fetch('/admin/api/activity');
+        const logs = await res.json();
+        let html = '<table class="table table-sm mb-0"><thead class="table-light"><tr><th>Time</th><th>Action</th><th>Details</th></tr></thead><tbody>';
+        logs.forEach(l => {
+            html += `<tr><td>${new Date(l.created_at).toLocaleString()}</td><td>${l.action}</td><td>${l.details||'-'}</td></tr>`;
+        });
+        document.getElementById('activity-log').innerHTML = html + '</tbody></table>';
+    }
+
+    // Tab events
+    document.querySelector('a[href="#users"]').addEventListener('shown.bs.tab', loadUsers);
+    document.querySelector('a[href="#payments"]').addEventListener('shown.bs.tab', ()=>loadPayments('all'));
+    document.querySelector('a[href="#messages"]').addEventListener('shown.bs.tab', ()=>{loadMessages();loadAnnouncements();});
+    document.querySelector('a[href="#activity"]').addEventListener('shown.bs.tab', loadActivity);
+
+    // Initial load
+    loadUsers();
+    </script>
+</body>
+</html>

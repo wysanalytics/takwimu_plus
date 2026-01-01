@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Notifications - Takwimu+{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h4><i class="bi bi-bell"></i> Notifications</h4>
+    
+    <!-- Announcements -->
+    {% if announcements %}
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="bi bi-megaphone"></i> Announcements
+        </div>
+        <div class="list-group list-group-flush">
+            {% for a in announcements %}
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between">
+                    <strong>{{ a.subject }}</strong>
+                    <small class="text-muted">{{ a.created_at.strftime('%d/%m/%Y') }}</small>
+                </div>
+                <p class="mb-0 mt-2">{{ a.content }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Direct Messages -->
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <i class="bi bi-envelope"></i> Messages from Admin
+        </div>
+        {% if messages %}
+        <div class="list-group list-group-flush">
+            {% for m in messages %}
+            <div class="list-group-item {% if not m.is_read %}bg-light{% endif %}">
+                <div class="d-flex justify-content-between">
+                    <strong>{{ m.subject }}</strong>
+                    <div>
+                        {% if not m.is_read %}
+                        <span class="badge bg-warning">New</span>
+                        {% endif %}
+                        <small class="text-muted">{{ m.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                    </div>
+                </div>
+                <p class="mb-0 mt-2">{{ m.content }}</p>
+                {% if not m.is_read %}
+                <button class="btn btn-sm btn-outline-secondary mt-2" onclick="markRead({{ m.id }})">
+                    Mark as read
+                </button>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card-body text-center text-muted">
+            <i class="bi bi-inbox fs-1"></i>
+            <p>No messages yet</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function markRead(id) {
+    fetch(`/notifications/${id}/read`, {method: 'POST'})
+        .then(() => location.reload());
+}
+</script>
+{% endblock %}

@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+{% block title %}Products - Takwimu+{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <h2 class="mb-0"><i class="bi bi-box-seam"></i> Products</h2>
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addProductModal">
+            <i class="bi bi-plus-circle"></i> Add Product
+        </button>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if products %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Model No.</th>
+                            <th>Buying Price</th>
+                            <th>Selling Price</th>
+                            <th>Profit/Unit</th>
+                            <th>Stock</th>
+                            <th>Category</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td class="fw-bold">{{ product.name }}</td>
+                            <td>
+                                {% if product.model_number %}
+                                <span class="badge bg-info">{{ product.model_number }}</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>TZS {{ "{:,.0f}".format(product.buying_price) }}</td>
+                            <td>TZS {{ "{:,.0f}".format(product.selling_price) }}</td>
+                            <td class="text-success">
+                                <i class="bi bi-arrow-up"></i> TZS {{ "{:,.0f}".format(product.selling_price - product.buying_price) }}
+                            </td>
+                            <td>
+                                {% if product.stock <= 0 %}
+                                <span class="badge bg-danger">Out of Stock</span>
+                                {% elif product.stock <= 5 %}
+                                <span class="badge bg-warning text-dark">{{ product.stock }} (Low)</span>
+                                {% else %}
+                                <span class="badge bg-success">{{ product.stock }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if product.category %}
+                                <span class="badge bg-secondary">{{ product.category }}</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-1"
+                                        onclick="editProduct({{ product.id }}, '{{ product.name }}', '{{ product.model_number or '' }}', {{ product.buying_price }}, {{ product.selling_price }}, {{ product.stock }}, '{{ product.category or '' }}')">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct({{ product.id }}, '{{ product.name }}')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <h5 class="text-muted mt-3">No products yet</h5>
+                <p class="text-muted">Add your first product to start selling!</p>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                    <i class="bi bi-plus-circle"></i> Add Your First Product
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Add Product</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addProductForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Product Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g., Samsung Galaxy A14" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Model Number</label>
+                        <input type="text" name="model_number" class="form-control" placeholder="e.g., SM-A145F">
+                        <small class="text-muted">Optional - for electronics, appliances, etc.</small>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Buying Price (TZS) <span class="text-danger">*</span></label>
+                            <input type="number" name="buying_price" class="form-control" placeholder="0" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Selling Price (TZS) <span class="text-danger">*</span></label>
+                            <input type="number" name="selling_price" class="form-control" placeholder="0" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Initial Stock Quantity</label>
+                        <input type="number" name="stock" class="form-control" value="0" min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Category</label>
+                        <input type="text" name="category" class="form-control" placeholder="e.g., Electronics, Beverages, Food">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-plus"></i> Add Product
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Product Modal -->
+<div class="modal fade" id="editProductModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-pencil"></i> Edit Product</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editProductForm">
+                <input type="hidden" name="id" id="edit-id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Product Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" id="edit-name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Model Number</label>
+                        <input type="text" name="model_number" id="edit-model_number" class="form-control">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Buying Price (TZS) <span class="text-danger">*</span></label>
+                            <input type="number" name="buying_price" id="edit-buying_price" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Selling Price (TZS) <span class="text-danger">*</span></label>
+                            <input type="number" name="selling_price" id="edit-selling_price" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Stock Quantity</label>
+                        <input type="number" name="stock" id="edit-stock" class="form-control" min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Category</label>
+                        <input type="text" name="category" id="edit-category" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Add product
+document.getElementById('addProductForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Adding...';
+
+    try {
+        const response = await fetch('/api/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            location.reload();
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.message || 'Failed to add product'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-plus"></i> Add Product';
+    }
+});
+
+// Edit product - open modal
+function editProduct(id, name, model_number, buying_price, selling_price, stock, category) {
+    document.getElementById('edit-id').value = id;
+    document.getElementById('edit-name').value = name;
+    document.getElementById('edit-model_number').value = model_number;
+    document.getElementById('edit-buying_price').value = buying_price;
+    document.getElementById('edit-selling_price').value = selling_price;
+    document.getElementById('edit-stock').value = stock;
+    document.getElementById('edit-category').value = category;
+
+    new bootstrap.Modal(document.getElementById('editProductModal')).show();
+}
+
+// Edit product - submit
+document.getElementById('editProductForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    const id = data.id;
+    delete data.id;
+
+    try {
+        const response = await fetch(`/api/products/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Error updating product');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+});
+
+// Delete product
+async function deleteProduct(id, name) {
+    if (!confirm(`Delete "${name}"?\n\nThis action cannot be undone.`)) return;
+
+    try {
+        const response = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Error deleting product');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+</script>
+{% endblock %}
