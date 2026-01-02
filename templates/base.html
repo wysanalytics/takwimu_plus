@@ -116,6 +116,39 @@
             </div>
         </div>
     </nav>
+
+    <!-- Install App Button (PWA) - Shows on Android when app can be installed -->
+    <div id="install-app-btn" class="alert alert-success alert-dismissible mx-3 mt-2 mb-0" style="display: none;">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <i class="bi bi-download me-2"></i>
+                <strong>{{ t('install_app') if t else 'Install Takwimu+' }}</strong>
+                <span class="d-none d-sm-inline ms-1">- {{ t('install_description') if t else 'Add to home screen for quick access' }}</span>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-light" onclick="installApp()">
+                    <i class="bi bi-download me-1"></i> {{ t('install') if t else 'Install' }}
+                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- iOS Install Guide - Shows on iPhone/iPad -->
+    <div id="ios-install-guide" class="alert alert-info alert-dismissible mx-3 mt-2 mb-0" style="display: none;">
+        <div class="d-flex align-items-start">
+            <i class="bi bi-phone me-2 mt-1"></i>
+            <div class="flex-grow-1">
+                <strong>{{ t('add_to_home_screen') if t else 'Add to Home Screen' }}</strong>
+                <ol class="mb-0 mt-1 ps-3 small">
+                    <li>{{ t('ios_step1') if t else 'Tap the Share button' }} <i class="bi bi-box-arrow-up"></i></li>
+                    <li>{{ t('ios_step2') if t else 'Scroll down and tap "Add to Home Screen"' }}</li>
+                    <li>{{ t('ios_step3') if t else 'Tap "Add" to confirm' }}</li>
+                </ol>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
     {% endif %}
 
     <main class="{% if current_user.is_authenticated %}container-fluid py-3{% endif %}">
@@ -157,6 +190,23 @@
     }
     checkNotifications();
     setInterval(checkNotifications, 60000);
+
+    // Show iOS install guide if on iOS and not in standalone mode
+    (function() {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+        const dismissed = localStorage.getItem('takwimu-ios-install-dismissed');
+
+        if (isIOS && !isStandalone && !dismissed) {
+            const guide = document.getElementById('ios-install-guide');
+            if (guide) {
+                guide.style.display = 'block';
+                guide.querySelector('.btn-close').addEventListener('click', function() {
+                    localStorage.setItem('takwimu-ios-install-dismissed', 'true');
+                });
+            }
+        }
+    })();
     </script>
     {% endif %}
 
