@@ -143,6 +143,13 @@ translations = {
         'secret_key': 'Secret Key',
         'admin_only': 'Admin only',
 
+        # PWA / Add to Home Screen
+        'add_to_home_screen': 'Add to Home Screen',
+        'install_app': 'Install App',
+        'ios_step1': 'Tap the Share button',
+        'ios_step2': 'Scroll down and tap "Add to Home Screen"',
+        'ios_step3': 'Tap "Add" to install',
+
         # Common
         'loading': 'Loading...',
         'error': 'Error',
@@ -298,6 +305,13 @@ translations = {
         'new_user': 'Mtumiaji mpya?',
         'secret_key': 'Ufunguo wa Siri',
         'admin_only': 'Msimamizi pekee',
+
+        # PWA / Add to Home Screen
+        'add_to_home_screen': 'Ongeza kwenye Skrini ya Nyumbani',
+        'install_app': 'Sakinisha Programu',
+        'ios_step1': 'Bonyeza kitufe cha Kushiriki',
+        'ios_step2': 'Sogeza chini na bonyeza "Ongeza kwenye Skrini ya Nyumbani"',
+        'ios_step3': 'Bonyeza "Ongeza" kusakinisha',
 
         # Common
         'loading': 'Inapakia...',
