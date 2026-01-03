@@ -65,6 +65,7 @@ class Product(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     model_number = db.Column(db.String(50), nullable=True)
+    barcode = db.Column(db.String(20), nullable=True)
     buying_price = db.Column(db.Float, nullable=False)
     selling_price = db.Column(db.Float, nullable=False)
     stock = db.Column(db.Integer, default=0)

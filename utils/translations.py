@@ -53,12 +53,23 @@ translations = {
         'add_new_product': 'Add New Product',
         'no_products': 'No products yet',
 
+        # Barcode Scanner
+        'scanBarcode': 'Scan Barcode',
+        'pointCameraAtBarcode': 'Point camera at product barcode',
+        'lookingUpProduct': 'Looking up product...',
+        'cameraError': 'Camera not available',
+        'cameraPermissionDenied': 'Camera permission denied. Please allow camera access.',
+        'enterManually': 'Enter Manually',
+        'productFoundInDatabase': 'Product found! Details auto-filled.',
+        'barcodeNotFound': 'Barcode not in database. Enter details manually.',
+        'tryAgain': 'Try Again',
+        'barcode': 'Barcode',
+
         # Expenses
         'expense': 'Expense',
         'description': 'Description',
         'amount': 'Amount',
         'date': 'Date',
-        'add_expense': 'Add Expense',
         'no_expenses': 'No expenses recorded',
         'rent': 'Rent',
         'transport': 'Transport',
@@ -216,12 +227,23 @@ translations = {
         'add_new_product': 'Ongeza Bidhaa Mpya',
         'no_products': 'Hakuna bidhaa bado',
 
+        # Barcode Scanner
+        'scanBarcode': 'Scan Barcode',
+        'pointCameraAtBarcode': 'Elekeza kamera kwenye barcode ya bidhaa',
+        'lookingUpProduct': 'Inatafuta bidhaa...',
+        'cameraError': 'Kamera haipatikani',
+        'cameraPermissionDenied': 'Ruhusa ya kamera imekataliwa. Tafadhali ruhusu ufikio wa kamera.',
+        'enterManually': 'Ingiza Manually',
+        'productFoundInDatabase': 'Bidhaa imepatikana! Maelezo yamejazwa.',
+        'barcodeNotFound': 'Barcode haipo kwenye database. Ingiza maelezo manually.',
+        'tryAgain': 'Jaribu Tena',
+        'barcode': 'Barcode',
+
         # Expenses
         'expense': 'Matumizi',
         'description': 'Maelezo',
         'amount': 'Kiasi',
         'date': 'Tarehe',
-        'add_expense': 'Ongeza Matumizi',
         'no_expenses': 'Hakuna matumizi yaliyorekodiwa',
         'rent': 'Kodi ya Nyumba',
         'transport': 'Usafiri',

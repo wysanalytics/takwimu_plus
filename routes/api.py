@@ -3,8 +3,14 @@ from flask_login import login_required, current_user
 from models import db, Product, Sale, Expense, Payment, UserSettings
 from datetime import datetime, timedelta
 from sqlalchemy import func
+import requests
+import re
+from time import time
 
 api_bp = Blueprint('api', __name__)
+
+# Rate limiting storage for barcode lookups
+barcode_rate_limits = {}
 
 
 # Products API
@@ -16,6 +22,7 @@ def get_products():
         'id': p.id,
         'name': p.name,
         'model_number': p.model_number,
+        'barcode': p.barcode,
         'buying_price': p.buying_price,
         'selling_price': p.selling_price,
         'stock': p.stock,
@@ -31,6 +38,7 @@ def add_product():
         user_id=current_user.id,
         name=data['name'],
         model_number=data.get('model_number', ''),
+        barcode=data.get('barcode', ''),
         buying_price=float(data['buying_price']),
         selling_price=float(data['selling_price']),
         stock=int(data.get('stock', 0)),
@@ -48,6 +56,7 @@ def update_product(id):
     data = request.json
     product.name = data.get('name', product.name)
     product.model_number = data.get('model_number', product.model_number)
+    product.barcode = data.get('barcode', product.barcode)
     product.buying_price = float(data.get('buying_price', product.buying_price))
     product.selling_price = float(data.get('selling_price', product.selling_price))
     product.stock = int(data.get('stock', product.stock))
@@ -63,6 +72,80 @@ def delete_product(id):
     db.session.delete(product)
     db.session.commit()
     return jsonify({'success': True})
+
+
+# Barcode Lookup API
+@api_bp.route('/barcode/lookup/<barcode>')
+@login_required
+def barcode_lookup(barcode):
+    # Rate limiting: max 30 requests per minute per user
+    user_id = str(current_user.id)
+    now = time()
+
+    if user_id in barcode_rate_limits:
+        rate_data = barcode_rate_limits[user_id]
+        if now > rate_data['reset_time']:
+            rate_data = {'count': 0, 'reset_time': now + 60}
+        rate_data['count'] += 1
+        barcode_rate_limits[user_id] = rate_data
+    else:
+        barcode_rate_limits[user_id] = {'count': 1, 'reset_time': now + 60}
+
+    if barcode_rate_limits[user_id]['count'] > 30:
+        return jsonify({'error': 'Too many requests. Please wait a minute.'}), 429
+
+    # Validate barcode format (digits only, 8-14 characters)
+    if not re.match(r'^\d{8,14}$', barcode):
+        return jsonify({'error': 'Invalid barcode format'}), 400
+
+    try:
+        # Try Open Food Facts first (free, no API key needed)
+        off_response = requests.get(
+            f'https://world.openfoodfacts.org/api/v0/product/{barcode}.json',
+            timeout=10
+        )
+        off_data = off_response.json()
+
+        if off_data.get('status') == 1 and off_data.get('product'):
+            product = off_data['product']
+            categories = product.get('categories_tags', [])
+            category = categories[0].replace('en:', '') if categories else 'general'
+            return jsonify({
+                'name': product.get('product_name') or product.get('product_name_en') or 'Unknown Product',
+                'category': category,
+                'brand': product.get('brands'),
+                'imageUrl': product.get('image_url')
+            })
+
+        # Try UPC Database as fallback
+        upc_response = requests.get(
+            f'https://api.upcitemdb.com/prod/trial/lookup?upc={barcode}',
+            timeout=10
+        )
+        upc_data = upc_response.json()
+
+        if upc_data.get('items') and len(upc_data['items']) > 0:
+            item = upc_data['items'][0]
+            images = item.get('images', [])
+            return jsonify({
+                'name': item.get('title') or 'Unknown Product',
+                'category': item.get('category') or 'general',
+                'brand': item.get('brand'),
+                'imageUrl': images[0] if images else None
+            })
+
+        # Product not found
+        return jsonify({
+            'error': 'Product not found',
+            'barcode': barcode,
+            'message': 'Product not in database. Enter details manually.'
+        }), 404
+
+    except requests.Timeout:
+        return jsonify({'error': 'Request timeout. Try again.'}), 504
+    except Exception as e:
+        print(f"Barcode lookup error: {e}")
+        return jsonify({'error': 'Failed to lookup barcode'}), 500
 
 
 # Sales API
@@ -191,7 +274,7 @@ def save_settings():
     return jsonify({'success': True})
 
 
-# Dashboard summary (updated for tax page)
+# Dashboard summary
 @api_bp.route('/dashboard/summary')
 @login_required
 def dashboard_summary():

@@ -1,12 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Products - Takwimu+{% endblock %}
+{% block title %}{{ t('products') }} - Takwimu+{% endblock %}
 {% block content %}
 <div class="container-fluid">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-        <h2 class="mb-0"><i class="bi bi-box-seam"></i> Products</h2>
-        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addProductModal">
-            <i class="bi bi-plus-circle"></i> Add Product
-        </button>
+        <h2 class="mb-0"><i class="bi bi-box-seam"></i> {{ t('products') }}</h2>
+        <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-outline-primary" onclick="openBarcodeScanner()">
+                <i class="bi bi-upc-scan"></i> {{ t('scanBarcode') }}
+            </button>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                <i class="bi bi-plus-circle"></i> {{ t('add_product') }}
+            </button>
+        </div>
     </div>
 
     <div class="card">
@@ -16,14 +21,15 @@
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Product Name</th>
+                            <th>{{ t('product_name') }}</th>
                             <th>Model No.</th>
-                            <th>Buying Price</th>
-                            <th>Selling Price</th>
+                            <th>{{ t('barcode') }}</th>
+                            <th>{{ t('buying_price') }}</th>
+                            <th>{{ t('selling_price') }}</th>
                             <th>Profit/Unit</th>
-                            <th>Stock</th>
-                            <th>Category</th>
-                            <th>Actions</th>
+                            <th>{{ t('stock') }}</th>
+                            <th>{{ t('category') }}</th>
+                            <th>{{ t('actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -33,6 +39,13 @@
                             <td>
                                 {% if product.model_number %}
                                 <span class="badge bg-info">{{ product.model_number }}</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if product.barcode %}
+                                <span class="badge bg-secondary">{{ product.barcode }}</span>
                                 {% else %}
                                 <span class="text-muted">-</span>
                                 {% endif %}
@@ -60,7 +73,7 @@
                             </td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary me-1"
-                                        onclick="editProduct({{ product.id }}, '{{ product.name }}', '{{ product.model_number or '' }}', {{ product.buying_price }}, {{ product.selling_price }}, {{ product.stock }}, '{{ product.category or '' }}')">
+                                        onclick="editProduct({{ product.id }}, '{{ product.name }}', '{{ product.model_number or '' }}', '{{ product.barcode or '' }}', {{ product.buying_price }}, {{ product.selling_price }}, {{ product.stock }}, '{{ product.category or '' }}')">
                                     <i class="bi bi-pencil"></i>
                                 </button>
                                 <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct({{ product.id }}, '{{ product.name }}')">
@@ -75,11 +88,16 @@
             {% else %}
             <div class="text-center py-5">
                 <i class="bi bi-inbox fs-1 text-muted"></i>
-                <h5 class="text-muted mt-3">No products yet</h5>
+                <h5 class="text-muted mt-3">{{ t('no_products') }}</h5>
                 <p class="text-muted">Add your first product to start selling!</p>
-                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                    <i class="bi bi-plus-circle"></i> Add Your First Product
-                </button>
+                <div class="d-flex gap-2 justify-content-center flex-wrap">
+                    <button class="btn btn-outline-primary" onclick="openBarcodeScanner()">
+                        <i class="bi bi-upc-scan"></i> {{ t('scanBarcode') }}
+                    </button>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                        <i class="bi bi-plus-circle"></i> {{ t('add_product') }}
+                    </button>
+                </div>
             </div>
             {% endif %}
         </div>
@@ -91,43 +109,48 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
-                <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Add Product</h5>
+                <h5 class="modal-title"><i class="bi bi-plus-circle"></i> {{ t('add_new_product') }}</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="addProductForm">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Product Name <span class="text-danger">*</span></label>
-                        <input type="text" name="name" class="form-control" placeholder="e.g., Samsung Galaxy A14" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Model Number</label>
-                        <input type="text" name="model_number" class="form-control" placeholder="e.g., SM-A145F">
-                        <small class="text-muted">Optional - for electronics, appliances, etc.</small>
+                        <label class="form-label">{{ t('product_name') }} <span class="text-danger">*</span></label>
+                        <input type="text" name="name" id="add-name" class="form-control" placeholder="e.g., Samsung Galaxy A14" required>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Buying Price (TZS) <span class="text-danger">*</span></label>
-                            <input type="number" name="buying_price" class="form-control" placeholder="0" required>
+                            <label class="form-label">Model Number</label>
+                            <input type="text" name="model_number" id="add-model_number" class="form-control" placeholder="e.g., SM-A145F">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Selling Price (TZS) <span class="text-danger">*</span></label>
-                            <input type="number" name="selling_price" class="form-control" placeholder="0" required>
+                            <label class="form-label">{{ t('barcode') }}</label>
+                            <input type="text" name="barcode" id="add-barcode" class="form-control" placeholder="e.g., 8901234567890" maxlength="14">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ t('buying_price') }} (TZS) <span class="text-danger">*</span></label>
+                            <input type="number" name="buying_price" id="add-buying_price" class="form-control" placeholder="0" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ t('selling_price') }} (TZS) <span class="text-danger">*</span></label>
+                            <input type="number" name="selling_price" id="add-selling_price" class="form-control" placeholder="0" required>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Initial Stock Quantity</label>
-                        <input type="number" name="stock" class="form-control" value="0" min="0">
+                        <label class="form-label">{{ t('stock') }}</label>
+                        <input type="number" name="stock" id="add-stock" class="form-control" value="0" min="0">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Category</label>
-                        <input type="text" name="category" class="form-control" placeholder="e.g., Electronics, Beverages, Food">
+                        <label class="form-label">{{ t('category') }}</label>
+                        <input type="text" name="category" id="add-category" class="form-control" placeholder="e.g., Electronics, Beverages, Food">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('cancel') }}</button>
                     <button type="submit" class="btn btn-success">
-                        <i class="bi bi-plus"></i> Add Product
+                        <i class="bi bi-plus"></i> {{ t('add_product') }}
                     </button>
                 </div>
             </form>
@@ -140,53 +163,197 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title"><i class="bi bi-pencil"></i> Edit Product</h5>
+                <h5 class="modal-title"><i class="bi bi-pencil"></i> {{ t('edit') }} {{ t('products') }}</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="editProductForm">
                 <input type="hidden" name="id" id="edit-id">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Product Name <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ t('product_name') }} <span class="text-danger">*</span></label>
                         <input type="text" name="name" id="edit-name" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Model Number</label>
-                        <input type="text" name="model_number" id="edit-model_number" class="form-control">
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Buying Price (TZS) <span class="text-danger">*</span></label>
+                            <label class="form-label">Model Number</label>
+                            <input type="text" name="model_number" id="edit-model_number" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ t('barcode') }}</label>
+                            <input type="text" name="barcode" id="edit-barcode" class="form-control" maxlength="14">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ t('buying_price') }} (TZS) <span class="text-danger">*</span></label>
                             <input type="number" name="buying_price" id="edit-buying_price" class="form-control" required>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Selling Price (TZS) <span class="text-danger">*</span></label>
+                            <label class="form-label">{{ t('selling_price') }} (TZS) <span class="text-danger">*</span></label>
                             <input type="number" name="selling_price" id="edit-selling_price" class="form-control" required>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Stock Quantity</label>
+                        <label class="form-label">{{ t('stock') }}</label>
                         <input type="number" name="stock" id="edit-stock" class="form-control" min="0">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Category</label>
+                        <label class="form-label">{{ t('category') }}</label>
                         <input type="text" name="category" id="edit-category" class="form-control">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('cancel') }}</button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check"></i> Save Changes
+                        <i class="bi bi-check"></i> {{ t('save') }}
                     </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<!-- Barcode Scanner Modal -->
+<div class="modal fade" id="barcodeScannerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-upc-scan"></i> {{ t('scanBarcode') }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="scanner-container" class="position-relative bg-dark rounded" style="height: 280px;">
+                    <video id="barcode-video" class="w-100 h-100 rounded" style="object-fit: cover;"></video>
+                    <div id="scan-overlay" class="position-absolute top-50 start-50 translate-middle text-center">
+                        <div class="border border-2 border-success rounded" style="width: 220px; height: 100px;"></div>
+                        <p class="text-white mt-2 small">{{ t('pointCameraAtBarcode') }}</p>
+                    </div>
+                    <div id="scan-loading" class="position-absolute top-50 start-50 translate-middle text-center d-none">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="text-white mt-2">{{ t('lookingUpProduct') }}</p>
+                    </div>
+                    <div id="scan-error" class="position-absolute top-50 start-50 translate-middle text-center d-none">
+                        <i class="bi bi-exclamation-circle text-danger fs-1"></i>
+                        <p class="text-white mt-2" id="scan-error-msg"></p>
+                        <button class="btn btn-sm btn-outline-light" onclick="startScanning()">{{ t('tryAgain') }}</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('cancel') }}</button>
+                <button type="button" class="btn btn-outline-primary" onclick="manualEntry()">{{ t('enterManually') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
+<script src="https://unpkg.com/@zxing/library@latest"></script>
 <script>
+let codeReader = null;
+let scannerModal = null;
+
+function openBarcodeScanner() {
+    scannerModal = new bootstrap.Modal(document.getElementById('barcodeScannerModal'));
+    scannerModal.show();
+    setTimeout(startScanning, 500);
+}
+
+async function startScanning() {
+    document.getElementById('scan-overlay').classList.remove('d-none');
+    document.getElementById('scan-loading').classList.add('d-none');
+    document.getElementById('scan-error').classList.add('d-none');
+
+    try {
+        codeReader = new ZXing.BrowserMultiFormatReader();
+        const devices = await codeReader.listVideoInputDevices();
+
+        // Find rear camera
+        const rearCamera = devices.find(d =>
+            d.label.toLowerCase().includes('back') ||
+            d.label.toLowerCase().includes('rear') ||
+            d.label.toLowerCase().includes('environment')
+        );
+
+        const videoElement = document.getElementById('barcode-video');
+
+        await codeReader.decodeFromVideoDevice(
+            rearCamera?.deviceId || null,
+            videoElement,
+            async (result, err) => {
+                if (result) {
+                    const barcode = result.getText();
+                    await lookupBarcode(barcode);
+                }
+            }
+        );
+    } catch (err) {
+        console.error('Camera error:', err);
+        showScanError("{{ t('cameraPermissionDenied') }}");
+    }
+}
+
+function showScanError(msg) {
+    document.getElementById('scan-overlay').classList.add('d-none');
+    document.getElementById('scan-loading').classList.add('d-none');
+    document.getElementById('scan-error').classList.remove('d-none');
+    document.getElementById('scan-error-msg').textContent = msg;
+}
+
+async function lookupBarcode(barcode) {
+    document.getElementById('scan-overlay').classList.add('d-none');
+    document.getElementById('scan-loading').classList.remove('d-none');
+
+    try {
+        const response = await fetch(`/api/barcode/lookup/${barcode}`);
+        const data = await response.json();
+
+        stopScanning();
+        scannerModal.hide();
+
+        // Pre-fill the add product form
+        document.getElementById('add-barcode').value = barcode;
+
+        if (response.ok && data.name) {
+            document.getElementById('add-name').value = data.name || '';
+            document.getElementById('add-category').value = data.category || '';
+            showToast("{{ t('productFoundInDatabase') }}", 'success');
+        } else {
+            showToast("{{ t('barcodeNotFound') }}", 'warning');
+        }
+
+        // Open add product modal
+        new bootstrap.Modal(document.getElementById('addProductModal')).show();
+
+    } catch (err) {
+        console.error('Lookup error:', err);
+        showScanError('Network error. Try again.');
+    }
+}
+
+function stopScanning() {
+    if (codeReader) {
+        codeReader.reset();
+        codeReader = null;
+    }
+}
+
+function manualEntry() {
+    stopScanning();
+    scannerModal.hide();
+    new bootstrap.Modal(document.getElementById('addProductModal')).show();
+}
+
+// Stop scanner when modal is closed
+document.getElementById('barcodeScannerModal').addEventListener('hidden.bs.modal', function() {
+    stopScanning();
+});
+
+function showToast(message, type) {
+    alert(message);
+}
+
 // Add product
 document.getElementById('addProductForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -214,15 +381,16 @@ document.getElementById('addProductForm').addEventListener('submit', async funct
         alert('Error: ' + error.message);
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-plus"></i> Add Product';
+        btn.innerHTML = '<i class="bi bi-plus"></i> {{ t("add_product") }}';
     }
 });
 
 // Edit product - open modal
-function editProduct(id, name, model_number, buying_price, selling_price, stock, category) {
+function editProduct(id, name, model_number, barcode, buying_price, selling_price, stock, category) {
     document.getElementById('edit-id').value = id;
     document.getElementById('edit-name').value = name;
     document.getElementById('edit-model_number').value = model_number;
+    document.getElementById('edit-barcode').value = barcode;
     document.getElementById('edit-buying_price').value = buying_price;
     document.getElementById('edit-selling_price').value = selling_price;
     document.getElementById('edit-stock').value = stock;
